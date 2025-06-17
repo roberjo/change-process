@@ -1,0 +1,74 @@
+# Harness Pipeline Template
+# Version: 1.0.0
+# Last Updated: [Date]
+
+pipeline:
+  name: [Pipeline Name]
+  identifier: [pipeline_identifier]
+  projectIdentifier: [project_identifier]
+  orgIdentifier: [org_identifier]
+  tags: {}
+  stages:
+    - stage:
+        name: Test
+        identifier: Test
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Build and Test
+                  identifier: Build_and_Test
+                  spec:
+                    shell: Bash
+                    command: |
+                      # Add your build and test commands here
+                      echo "Running build and test steps"
+                      
+              - step:
+                  type: Run
+                  name: Production Readiness
+                  identifier: Production_Readiness
+                  spec:
+                    shell: Bash
+                    command: |
+                      # Add your production readiness validation commands here
+                      echo "Running production readiness checks"
+
+    - stage:
+        name: Production
+        identifier: Production
+        type: Deployment
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: Pre-deployment Checks
+                  identifier: Pre_deployment_Checks
+                  spec:
+                    shell: Bash
+                    command: |
+                      # Add your pre-deployment validation commands here
+                      echo "Running pre-deployment checks"
+
+              - step:
+                  type: ShellScript
+                  name: Deployment
+                  identifier: Deployment
+                  spec:
+                    shell: Bash
+                    command: |
+                      # Add your deployment commands here
+                      echo "Running deployment steps"
+
+              - step:
+                  type: ShellScript
+                  name: Post-deployment Validation
+                  identifier: Post_deployment_Validation
+                  spec:
+                    shell: Bash
+                    command: |
+                      # Add your post-deployment validation commands here
+                      echo "Running post-deployment validation" 
