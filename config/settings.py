@@ -7,6 +7,9 @@ import os
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class ServiceNowConfig:
@@ -64,6 +67,13 @@ class ConfigManager:
         self.config = self._load_config()
         self._validate_config()
     
+    def _safe_int(self, value: str, default: int, var_name: str) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            logger.warning(f"Invalid value for {var_name}: '{value}', using default {default}")
+            return default
+    
     def _load_config(self) -> AppConfig:
         """Load configuration from environment variables."""
         return AppConfig(
@@ -82,7 +92,7 @@ class ConfigManager:
                 teams_webhook_url=os.getenv('TEAMS_WEBHOOK_URL'),
                 slack_webhook_url=os.getenv('SLACK_WEBHOOK_URL'),
                 email_smtp_server=os.getenv('EMAIL_SMTP_SERVER'),
-                email_smtp_port=int(os.getenv('EMAIL_SMTP_PORT', '587')),
+                email_smtp_port=self._safe_int(os.getenv('EMAIL_SMTP_PORT', '587'), 587, 'EMAIL_SMTP_PORT'),
                 email_username=os.getenv('EMAIL_USERNAME'),
                 email_password=os.getenv('EMAIL_PASSWORD')
             ),
@@ -95,8 +105,8 @@ class ConfigManager:
             ) if os.getenv('HARNESS_ACCOUNT_ID') else None,
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
             log_file=os.getenv('LOG_FILE', 'change_process.log'),
-            timeout=int(os.getenv('TIMEOUT', '300')),
-            retry_attempts=int(os.getenv('RETRY_ATTEMPTS', '3'))
+            timeout=self._safe_int(os.getenv('TIMEOUT', '300'), 300, 'TIMEOUT'),
+            retry_attempts=self._safe_int(os.getenv('RETRY_ATTEMPTS', '3'), 3, 'RETRY_ATTEMPTS')
         )
     
     def _validate_config(self) -> None:
@@ -107,6 +117,7 @@ class ConfigManager:
         
         for field in required_sn_fields:
             if not getattr(self.config.servicenow, field):
+                logger.error(f"Missing required ServiceNow configuration: {field if field != 'client_secret' and field != 'password' else '***'}")
                 raise ValueError(f"Missing required ServiceNow configuration: {field}")
     
     def get_config(self) -> AppConfig:
@@ -114,6 +125,36 @@ class ConfigManager:
         return self.config
     
     def update_config(self, updates: Dict[str, Any]) -> None:
-        """Update configuration settings."""
-        # Implementation for dynamic config updates
-        pass 
+        """Update configuration settings with validation and sensitive value masking in logs."""
+        sensitive_keys = {'password', 'secret', 'api_key', 'client_secret'}
+        updated = False
+        for section_name in ['servicenow', 'notifications', 'harness']:
+            section = getattr(self.config, section_name, None)
+            if section and isinstance(section, object):
+                for key, value in updates.items():
+                    if hasattr(section, key):
+                        old_value = getattr(section, key)
+                        setattr(section, key, value)
+                        masked_key = key.lower()
+                        if any(s in masked_key for s in sensitive_keys):
+                            logger.info(f"Updated config: {section_name}.{key} = *** (was ***)")
+                        else:
+                            logger.info(f"Updated config: {section_name}.{key} = {value} (was {old_value})")
+                        updated = True
+        # Top-level AppConfig fields
+        for key, value in updates.items():
+            if hasattr(self.config, key):
+                old_value = getattr(self.config, key)
+                setattr(self.config, key, value)
+                masked_key = key.lower()
+                if any(s in masked_key for s in sensitive_keys):
+                    logger.info(f"Updated config: {key} = *** (was ***)")
+                else:
+                    logger.info(f"Updated config: {key} = {value} (was {old_value})")
+                updated = True
+        if updated:
+            try:
+                self._validate_config()
+            except Exception as e:
+                logger.error(f"Config update validation failed: {str(e)}")
+                raise 
