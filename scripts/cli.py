@@ -8,9 +8,11 @@ Provides a unified CLI for all change management operations.
 import click
 import logging
 import sys
+import os
 from pathlib import Path
 from typing import Optional
 from datetime import datetime, timedelta
+import re
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -25,6 +27,38 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+def validate_datetime_format(date_string: str, field_name: str) -> datetime:
+    """
+    Validate and parse datetime string in format 'YYYY-MM-DD HH:MM:SS'.
+    
+    Args:
+        date_string: The date string to validate and parse
+        field_name: Name of the field for error messages
+        
+    Returns:
+        Parsed datetime object
+        
+    Raises:
+        click.BadParameter: If date format is invalid
+    """
+    expected_format = '%Y-%m-%d %H:%M:%S'
+    
+    # Check if the string matches the expected pattern
+    pattern = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$'
+    if not re.match(pattern, date_string):
+        raise click.BadParameter(
+            f"Invalid {field_name} format: '{date_string}'. "
+            f"Expected format: YYYY-MM-DD HH:MM:SS (e.g., '2024-01-15 14:30:00')"
+        )
+    
+    try:
+        return datetime.strptime(date_string, expected_format)
+    except ValueError as e:
+        raise click.BadParameter(
+            f"Invalid {field_name}: '{date_string}'. "
+            f"Date/time values are invalid. Expected format: YYYY-MM-DD HH:MM:SS (e.g., '2024-01-15 14:30:00')"
+        )
 
 @click.group()
 @click.option('--config', '-c', help='Configuration file path')
@@ -49,7 +83,7 @@ def cli(ctx, config: Optional[str], verbose: bool):
         config_manager = ConfigManager(config)
         ctx.obj = {
             'config': config_manager.get_config(),
-            'sn_client': ServiceNowChangeRequest(),
+            'sn_client': ServiceNowChangeRequest(config_manager.get_config().servicenow),
             'notifications': NotificationManager({
                 'teams_webhook_url': config_manager.get_config().notifications.teams_webhook_url,
                 'email_smtp_server': config_manager.get_config().notifications.email_smtp_server,
@@ -110,9 +144,15 @@ def create(ctx, title: str, description: str, start_date: str, end_date: str,
     try:
         sn_client = ctx.obj['sn_client']
         
-        # Parse dates
-        start_dt = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
+        # Parse dates with validation
+        start_dt = validate_datetime_format(start_date, 'start date')
+        end_dt = validate_datetime_format(end_date, 'end date')
+        
+        # Validate that end date is after start date
+        if end_dt <= start_dt:
+            raise click.BadParameter(
+                f"End date ({end_date}) must be after start date ({start_date})"
+            )
         
         # Create change request
         change = sn_client.create_scheduled_change(
@@ -140,6 +180,9 @@ def create(ctx, title: str, description: str, start_date: str, end_date: str,
             priority='normal' if risk_level == 'Low' else 'high'
         )
         
+    except click.BadParameter as e:
+        click.echo(f"❌ {str(e)}", err=True)
+        sys.exit(1)
     except Exception as e:
         click.echo(f"❌ Failed to create change request: {str(e)}", err=True)
         sys.exit(1)
