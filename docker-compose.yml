@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  change-process:
+    build: .
+    container_name: change-process-app
+    environment:
+      - SN_INSTANCE=${SN_INSTANCE}
+      - SN_CLIENT_ID=${SN_CLIENT_ID}
+      - SN_CLIENT_SECRET=${SN_CLIENT_SECRET}
+      - SN_USERNAME=${SN_USERNAME}
+      - SN_PASSWORD=${SN_PASSWORD}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
+      - EMAIL_SMTP_SERVER=${EMAIL_SMTP_SERVER}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./.env:/app/.env
+    command: ["python", "scripts/cli.py", "--help"]
+    profiles:
+      - default
+
+  # Development service with hot reload
+  change-process-dev:
+    build: .
+    container_name: change-process-dev
+    environment:
+      - SN_INSTANCE=${SN_INSTANCE}
+      - SN_CLIENT_ID=${SN_CLIENT_ID}
+      - SN_CLIENT_SECRET=${SN_CLIENT_SECRET}
+      - SN_USERNAME=${SN_USERNAME}
+      - SN_PASSWORD=${SN_PASSWORD}
+      - TEAMS_WEBHOOK_URL=${TEAMS_WEBHOOK_URL}
+      - EMAIL_SMTP_SERVER=${EMAIL_SMTP_SERVER}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./.env:/app/.env
+    command: ["python", "-m", "pytest", "tests/", "-v"]
+    profiles:
+      - dev
+
+  # Test service
+  change-process-test:
+    build: .
+    container_name: change-process-test
+    environment:
+      - SN_INSTANCE=test-instance
+      - SN_CLIENT_ID=test-client-id
+      - SN_CLIENT_SECRET=test-client-secret
+      - SN_USERNAME=test-username
+      - SN_PASSWORD=test-password
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    command: ["python", "-m", "pytest", "tests/", "--cov=scripts", "--cov-report=html"]
+    profiles:
+      - test
+
+volumes:
+  logs:
+  data: 
