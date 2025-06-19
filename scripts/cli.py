@@ -31,7 +31,16 @@ logger = logging.getLogger(__name__)
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.pass_context
 def cli(ctx, config: Optional[str], verbose: bool):
-    """Change Process Automation CLI"""
+    """
+    Initializes the Change Process Automation CLI, loading configuration and setting up required services.
+    
+    Parameters:
+        ctx: Click context object for passing shared state between commands.
+        config (str, optional): Path to the configuration file.
+        verbose (bool): Enables verbose logging if True.
+    
+    Exits the program if configuration loading fails.
+    """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
@@ -55,7 +64,9 @@ def cli(ctx, config: Optional[str], verbose: bool):
 
 @cli.group()
 def change():
-    """Change request management commands"""
+    """
+    Defines the CLI command group for managing change requests.
+    """
     pass
 
 @change.command()
@@ -79,7 +90,23 @@ def change():
 def create(ctx, title: str, description: str, start_date: str, end_date: str,
            risk_level: str, type: str, priority: str, implementation_plan: str,
            test_plan: str, rollback_plan: str):
-    """Create a new change request"""
+    """
+           Creates a new change request in ServiceNow with the specified details and sends a notification upon success.
+           
+           Parameters:
+               title (str): The title of the change request.
+               description (str): A detailed description of the change.
+               start_date (str): Scheduled start date and time in 'YYYY-MM-DD HH:MM:SS' format.
+               end_date (str): Scheduled end date and time in 'YYYY-MM-DD HH:MM:SS' format.
+               risk_level (str): The risk level for the change (e.g., Low, Medium, High, Critical).
+               type (str): The type of change (e.g., Normal, Standard, Emergency, Emergency Fix).
+               priority (str): The priority of the change (1-5).
+               implementation_plan (str): The implementation plan for the change.
+               test_plan (str): The test plan for the change.
+               rollback_plan (str): The rollback plan for the change.
+           
+           On successful creation, outputs the change request number and sends a notification. Exits with an error message if creation fails.
+           """
     try:
         sn_client = ctx.obj['sn_client']
         
@@ -126,7 +153,14 @@ def create(ctx, title: str, description: str, start_date: str, end_date: str,
 @click.option('--comments', '-c', help='Status change comments')
 @click.pass_context
 def update_status(ctx, number: str, status: str, comments: str):
-    """Update change request status"""
+    """
+    Updates the status of a specified change request and sends a notification about the status change.
+    
+    Parameters:
+        number (str): The unique identifier of the change request to update.
+        status (str): The new status to set for the change request.
+        comments (str): Optional comments to include with the status update.
+    """
     try:
         sn_client = ctx.obj['sn_client']
         
@@ -155,7 +189,17 @@ def update_status(ctx, number: str, status: str, comments: str):
 @click.pass_context
 def list(ctx, status: Optional[str], start_date: Optional[str], 
          end_date: Optional[str], limit: int):
-    """List change requests"""
+    """
+         List change requests with optional filters for status, start date, end date, and result limit.
+         
+         Parameters:
+             status (Optional[str]): Filter change requests by status if provided.
+             start_date (Optional[str]): Filter change requests starting on or after this date (YYYY-MM-DD).
+             end_date (Optional[str]): Filter change requests ending on or before this date (YYYY-MM-DD).
+             limit (int): Maximum number of change requests to display.
+         
+         Displays the list of matching change requests or a message if none are found.
+         """
     try:
         sn_client = ctx.obj['sn_client']
         
@@ -197,7 +241,9 @@ def list(ctx, status: Optional[str], start_date: Optional[str],
 
 @cli.group()
 def deployment():
-    """Deployment management commands"""
+    """
+    Defines the CLI group for deployment management commands.
+    """
     pass
 
 @deployment.command()
@@ -208,7 +254,16 @@ def deployment():
 @click.option('--auto-approve', is_flag=True, help='Skip manual approval')
 @click.pass_context
 def deploy(ctx, version: str, environment: str, auto_approve: bool):
-    """Deploy a version to an environment"""
+    """
+    Deploys a specified version to a given environment, optionally skipping manual approval.
+    
+    Parameters:
+        version (str): The version identifier to deploy.
+        environment (str): The target environment for deployment (e.g., development, staging, production).
+        auto_approve (bool): If True, proceeds with deployment without manual approval.
+    
+    On successful deployment, sends a completion notification. Exits with an error message if deployment fails or an exception occurs.
+    """
     try:
         from scripts.examples.automated_deployment import AutomatedDeployment
         
@@ -243,7 +298,9 @@ def deploy(ctx, version: str, environment: str, auto_approve: bool):
 
 @cli.group()
 def notifications():
-    """Notification management commands"""
+    """
+    Defines the CLI group for notification management commands.
+    """
     pass
 
 @notifications.command()
@@ -257,7 +314,15 @@ def notifications():
               help='Notification channels')
 @click.pass_context
 def send(ctx, title: str, message: str, priority: str, channels):
-    """Send a notification"""
+    """
+    Sends a notification message with the specified title, body, and priority to one or more channels.
+    
+    Parameters:
+        title (str): The notification title.
+        message (str): The notification body content.
+        priority (str): The priority level of the notification (e.g., low, normal, high, urgent).
+        channels (list): List of channels to send the notification through (e.g., 'teams', 'email').
+    """
     try:
         notifications = ctx.obj['notifications']
         
@@ -290,7 +355,9 @@ def send(ctx, title: str, message: str, priority: str, channels):
 
 @cli.command()
 def version():
-    """Show version information"""
+    """
+    Display the current version of the Change Process Automation CLI.
+    """
     click.echo("Change Process Automation v1.0.0")
 
 if __name__ == '__main__':

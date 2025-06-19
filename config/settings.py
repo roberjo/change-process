@@ -55,7 +55,12 @@ class ConfigManager:
     """Manages application configuration with validation."""
     
     def __init__(self, env_file: Optional[str] = None):
-        """Initialize configuration manager."""
+        """
+        Initializes the configuration manager by loading environment variables and validating the application configuration.
+        
+        Parameters:
+            env_file (Optional[str]): Path to a .env file to load environment variables from. If not provided, defaults are used.
+        """
         if env_file:
             load_dotenv(env_file)
         else:
@@ -65,7 +70,12 @@ class ConfigManager:
         self._validate_config()
     
     def _load_config(self) -> AppConfig:
-        """Load configuration from environment variables."""
+        """
+        Constructs and returns the application configuration by reading environment variables.
+        
+        Returns:
+            AppConfig: The aggregated configuration object populated from environment variables, including ServiceNow, notification, and optional Harness settings.
+        """
         return AppConfig(
             servicenow=ServiceNowConfig(
                 instance=os.getenv('SN_INSTANCE', ''),
@@ -100,7 +110,9 @@ class ConfigManager:
         )
     
     def _validate_config(self) -> None:
-        """Validate required configuration settings."""
+        """
+        Checks that all required ServiceNow configuration fields are present, raising a ValueError if any are missing.
+        """
         required_sn_fields = [
             'instance', 'client_id', 'client_secret', 'username', 'password'
         ]
@@ -110,10 +122,20 @@ class ConfigManager:
                 raise ValueError(f"Missing required ServiceNow configuration: {field}")
     
     def get_config(self) -> AppConfig:
-        """Get the application configuration."""
+        """
+        Return the current application configuration.
+        
+        Returns:
+            AppConfig: The loaded and validated application configuration.
+        """
         return self.config
     
     def update_config(self, updates: Dict[str, Any]) -> None:
-        """Update configuration settings."""
+        """
+        Placeholder for dynamically updating configuration settings at runtime.
+        
+        Parameters:
+            updates (Dict[str, Any]): Dictionary of configuration fields and their new values.
+        """
         # Implementation for dynamic config updates
         pass 

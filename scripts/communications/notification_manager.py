@@ -36,11 +36,21 @@ class NotificationChannel:
     """Base class for notification channels."""
     
     def __init__(self, config: Dict[str, Any]):
+        """
+        Initialize the notification channel with the provided configuration.
+        
+        The channel is enabled by default unless explicitly disabled in the configuration.
+        """
         self.config = config
         self.enabled = config.get('enabled', True)
     
     def send(self, message: NotificationMessage) -> bool:
-        """Send notification message."""
+        """
+        Sends a notification message if the channel is enabled.
+        
+        Returns:
+            bool: True if the message was sent successfully; False otherwise.
+        """
         if not self.enabled:
             logger.warning(f"Channel {self.__class__.__name__} is disabled")
             return False
@@ -52,18 +62,40 @@ class NotificationChannel:
             return False
     
     def _send_impl(self, message: NotificationMessage) -> bool:
-        """Implementation specific to each channel."""
+        """
+        Sends a notification message using the channel-specific implementation.
+        
+        Parameters:
+            message (NotificationMessage): The notification message to be sent.
+        
+        Returns:
+            bool: True if the message was sent successfully, False otherwise.
+        
+        Raises:
+            NotImplementedError: If the method is not implemented by a subclass.
+        """
         raise NotImplementedError
 
 class TeamsNotification(NotificationChannel):
     """Microsoft Teams notification channel."""
     
     def __init__(self, webhook_url: str):
+        """
+        Initialize a TeamsNotification channel with the specified webhook URL.
+        
+        Parameters:
+            webhook_url (str): The Microsoft Teams webhook URL used to send notifications.
+        """
         super().__init__(None)
         self.webhook_url = webhook_url
     
     def _send_impl(self, message: NotificationMessage) -> bool:
-        """Send notification to Microsoft Teams."""
+        """
+        Sends a notification message to a Microsoft Teams channel using a webhook.
+        
+        Returns:
+            bool: True if the message was sent successfully, False otherwise.
+        """
         if not self.webhook_url:
             logger.error("Teams webhook URL not configured")
             return False
@@ -103,7 +135,15 @@ class TeamsNotification(NotificationChannel):
             return False
     
     def _get_theme_color(self, priority: str) -> str:
-        """Get theme color based on priority."""
+        """
+        Return the Teams message card theme color hex code corresponding to the given priority level.
+        
+        Parameters:
+            priority (str): The priority level ('low', 'normal', 'high', or 'urgent').
+        
+        Returns:
+            str: Hex color code as a string for the specified priority; defaults to 'normal' if unrecognized.
+        """
         colors = {
             'low': '00FF00',      # Green
             'normal': '0078D4',   # Blue
@@ -116,7 +156,12 @@ class SlackNotification(NotificationChannel):
     """Slack notification channel."""
     
     def _send_impl(self, message: NotificationMessage) -> bool:
-        """Send notification to Slack."""
+        """
+        Sends a notification message to a Slack channel using the configured webhook URL.
+        
+        Returns:
+            bool: True if the message was sent successfully, False otherwise.
+        """
         webhook_url = self.config.get('webhook_url')
         if not webhook_url:
             logger.error("Slack webhook URL not configured")
@@ -169,6 +214,11 @@ class EmailNotification(NotificationChannel):
     """Email notification channel."""
     
     def __init__(self, config: Dict[str, Any]):
+        """
+        Initialize the EmailNotification channel with SMTP server configuration.
+        
+        The configuration dictionary should include SMTP server address, port (default 587), username, and password for sending emails.
+        """
         super().__init__(config)
         self.smtp_server = config.get('email_smtp_server')
         self.smtp_port = config.get('email_smtp_port', 587)
@@ -176,7 +226,12 @@ class EmailNotification(NotificationChannel):
         self.password = config.get('email_password')
     
     def _send_impl(self, message: NotificationMessage) -> bool:
-        """Send notification via email."""
+        """
+        Sends a notification message via email using SMTP.
+        
+        Returns:
+            bool: True if the email was sent successfully, False otherwise.
+        """
         if not self.enabled:
             logger.warning(f"Email channel is disabled")
             return False
@@ -220,13 +275,21 @@ class NotificationManager:
     """Manages multiple notification channels."""
     
     def __init__(self, config: Dict[str, Any]):
-        """Initialize notification manager with configuration."""
+        """
+        Initialize the notification manager with the provided configuration.
+        
+        The configuration dictionary is used to set up available notification channels (e.g., Teams, Email) for sending notifications.
+        """
         self.config = config
         self.channels = {}
         self._setup_channels()
     
     def _setup_channels(self) -> None:
-        """Setup notification channels based on configuration."""
+        """
+        Initializes and registers notification channels based on the current configuration.
+        
+        Channels are added to the manager if their required configuration (such as webhook URLs or SMTP server details) is present.
+        """
         # Teams
         if self.config.get('teams_webhook_url'):
             self.channels[NotificationType.TEAMS] = TeamsNotification(
@@ -244,7 +307,18 @@ class NotificationManager:
         message: NotificationMessage,
         channels: Optional[List[NotificationType]] = None
     ) -> Dict[NotificationType, bool]:
-        """Send notification to specified channels."""
+        """
+        Send a notification message through specified channels.
+        
+        If no channels are specified, the message is sent to all configured channels. Returns a dictionary mapping each channel type to a boolean indicating whether the notification was successfully sent.
+        
+        Parameters:
+            message (NotificationMessage): The notification message to send.
+            channels (Optional[List[NotificationType]]): List of channels to send the message to. If None, sends to all configured channels.
+        
+        Returns:
+            Dict[NotificationType, bool]: Mapping of channel types to success status for each send attempt.
+        """
         if channels is None:
             channels = list(self.channels.keys())
         
@@ -267,7 +341,20 @@ class NotificationManager:
         priority: str = "normal",
         channels: Optional[List[NotificationType]] = None
     ) -> Dict[NotificationType, bool]:
-        """Send standardized change notification."""
+        """
+        Send a standardized change notification message to one or more configured channels.
+        
+        Parameters:
+            change_number (str): Identifier for the change request.
+            status (str): Current status of the change.
+            title (str): Title or summary of the change.
+            description (str): Detailed description of the change.
+            priority (str, optional): Priority level of the notification. Defaults to "normal".
+            channels (Optional[List[NotificationType]]): Specific channels to send the notification to. If None, sends to all configured channels.
+        
+        Returns:
+            Dict[NotificationType, bool]: Mapping of each channel type to a boolean indicating whether the notification was sent successfully.
+        """
         message = NotificationMessage(
             title=f"Change Request {change_number}: {title}",
             body=f"""
@@ -295,7 +382,20 @@ Change Number: {change_number}
         priority: str = "normal",
         channels: Optional[List[NotificationType]] = None
     ) -> Dict[NotificationType, bool]:
-        """Send standardized deployment notification."""
+        """
+        Send a standardized deployment notification message to configured channels.
+        
+        Parameters:
+            version (str): The version being deployed.
+            environment (str): The target deployment environment.
+            status (str): The deployment status (e.g., "Started", "Succeeded", "Failed").
+            details (str): Additional details about the deployment.
+            priority (str, optional): The priority level of the notification. Defaults to "normal".
+            channels (Optional[List[NotificationType]]): Specific channels to send the notification to. If None, sends to all configured channels.
+        
+        Returns:
+            Dict[NotificationType, bool]: A mapping of notification channel types to boolean values indicating success or failure for each channel.
+        """
         message = NotificationMessage(
             title=f"Deployment {status}: {version} to {environment}",
             body=f"""
