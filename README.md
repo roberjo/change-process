@@ -2,6 +2,24 @@
 
 This project provides a comprehensive set of tools and scripts for automating change management processes, particularly focusing on ServiceNow integration, deployment automation, and communication workflows.
 
+## 🚀 New Features & Improvements
+
+### ✨ Enhanced Features
+- **Unified CLI Interface**: Modern command-line interface using Click
+- **Centralized Configuration**: Type-safe configuration management
+- **Multi-Channel Notifications**: Support for Teams, Slack, and Email
+- **Docker Support**: Containerized deployment and development
+- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+- **Comprehensive Testing**: Unit, integration, and end-to-end tests
+- **Development Tools**: Makefile for common tasks and PowerShell support
+
+### 🔧 Technical Improvements
+- **Better Error Handling**: Comprehensive exception management
+- **Type Safety**: Full type hints throughout the codebase
+- **Security**: OAuth2 authentication and secure credential management
+- **Performance**: Connection pooling and retry mechanisms
+- **Documentation**: Extensive documentation and development guides
+
 ## Technology Stack
 
 - **ServiceNow**: Change management and request tracking
@@ -10,86 +28,149 @@ This project provides a comprehensive set of tools and scripts for automating ch
 - **Python**: Core automation and integration scripts
 - **Bash**: Utility scripts and process automation
 - **Git**: Version control and change tracking
+- **Docker**: Containerization and deployment
+- **GitHub Actions**: Continuous integration and deployment
 
 ## Directory Structure
 
 ```
 .
+├── config/                     # Configuration management
+│   └── settings.py            # Centralized configuration
 ├── docs/                      # Documentation
-│   ├── index.md              # Documentation index
-│   ├── process/              # Process documentation
-│   │   ├── change-process.md # Change process details
-│   │   └── templates/        # Process templates
-│   └── tools/                # Tool documentation
-│       ├── servicenow.md     # ServiceNow integration
-│       └── harness.md        # Harness pipeline
+│   ├── processes/             # Process documentation
+│   ├── guides/                # User guides
+│   ├── DEVELOPMENT.md         # Development guide
+│   └── templates/             # Documentation templates
 ├── scripts/                   # Automation scripts
+│   ├── communications/        # Notification system
+│   │   └── notification_manager.py # Unified notification manager
 │   ├── servicenow/           # ServiceNow integration
 │   │   ├── change_request.py # Change request automation
 │   │   └── .env.template     # Environment template
-│   ├── communications/       # Communication scripts
-│   │   └── notify.sh        # Notification utilities
-│   └── examples/            # Example scripts
-│       └── automated_deployment.py # Deployment automation
+│   ├── examples/            # Example scripts
+│   │   └── automated_deployment.py # Deployment automation
+│   └── cli.py               # Command line interface
 ├── templates/                # Process templates
-│   ├── change-request.md    # Change request template
-│   ├── deployment-plan.md   # Deployment plan template
 │   └── harness-pipeline-template.yaml # Harness pipeline
-└── README.md                # Project documentation
+├── tests/                   # Test suite
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── requirements-test.txt # Test dependencies
+├── tools/                   # Utility tools
+├── Dockerfile               # Docker configuration
+├── docker-compose.yml       # Docker Compose setup
+├── Makefile                 # Build automation
+├── requirements.txt         # Production dependencies
+├── .github/workflows/       # CI/CD pipelines
+│   └── ci.yml              # GitHub Actions workflow
+└── README.md               # Project documentation
 ```
 
-## Documentation
-
-### Process Documentation
-- [Change Process Overview](docs/process/change-process.md)
-- [Change Request Template](templates/change-request.md)
-- [Deployment Plan Template](templates/deployment-plan.md)
-
-### Tool Documentation
-- [ServiceNow Integration](docs/tools/servicenow.md)
-- [Harness Pipeline](docs/tools/harness.md)
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.9 or higher
+- Docker (optional)
 - ServiceNow instance with API access
-- Harness account and API access
-- Microsoft Teams webhook URL
-- Outlook SMTP access
+- Microsoft Teams webhook URL (optional)
+- Email SMTP access (optional)
 
-### Configuration
+### Installation
 
-1. **ServiceNow Integration**
+1. **Clone the repository**
    ```bash
-   # Copy the environment template
-   cp scripts/servicenow/.env.template scripts/servicenow/.env
-   
-   # Edit the .env file with your credentials
-   SN_INSTANCE=your-instance.service-now.com
-   SN_CLIENT_ID=your-client-id
-   SN_CLIENT_SECRET=your-client-secret
-   SN_USERNAME=your-username
-   SN_PASSWORD=your-password
+   git clone <repository-url>
+   cd change-process
    ```
 
-2. **Communication Setup**
+2. **Quick setup (recommended)**
    ```bash
-   # Configure Teams webhook
-   export TEAMS_WEBHOOK_URL=your-webhook-url
-   
-   # Configure Outlook SMTP
-   export OUTLOOK_SMTP_SERVER=your-smtp-server
-   export OUTLOOK_SMTP_PORT=587
-   export OUTLOOK_USERNAME=your-email
-   export OUTLOOK_PASSWORD=your-password
+   make quick-start
    ```
 
-### Scripts
+3. **Manual setup**
+   ```bash
+   # Install dependencies
+   make install
+   
+   # Set up environment
+   make setup-env
+   
+   # Edit configuration
+   # Edit scripts/servicenow/.env with your credentials
+   ```
+
+### Windows PowerShell Setup
+
+For Windows users, use PowerShell-specific commands:
+
+```powershell
+# Install dependencies
+make install-ps
+
+# Run tests
+make test-ps
+
+# Clean up
+make clean-ps
+```
+
+## Usage
+
+### Command Line Interface
+
+The project now includes a modern CLI for easy interaction:
+
+```bash
+# Show help
+python scripts/cli.py --help
+
+# Create a change request
+python scripts/cli.py change create \
+    --title "Deploy Update" \
+    --description "Deploy version 1.0.0" \
+    --start-date "2024-03-20 10:00:00" \
+    --end-date "2024-03-20 12:00:00" \
+    --risk-level "Low"
+
+# List change requests
+python scripts/cli.py change list --status "Scheduled"
+
+# Update change status
+python scripts/cli.py change update-status \
+    --number "CHG123456" \
+    --status "Implement"
+
+# Deploy to environment
+python scripts/cli.py deployment deploy \
+    --version "1.0.0" \
+    --environment "production"
+
+# Send notification
+python scripts/cli.py notifications send \
+    --title "Deployment Complete" \
+    --message "Version 1.0.0 deployed successfully" \
+    --channels teams email
+```
+
+### Docker Usage
+
+```bash
+# Build and run with Docker
+make docker-build
+make docker-run
+
+# Development with Docker Compose
+docker-compose --profile dev up --build
+
+# Run tests in Docker
+docker-compose --profile test up --build --abort-on-container-exit
+```
+
+### Traditional Script Usage
 
 #### ServiceNow Change Request Automation
-The `change_request.py` script provides comprehensive change request management:
-
 ```bash
 # Create a change request
 python scripts/servicenow/change_request.py --action create \
@@ -102,26 +183,9 @@ python scripts/servicenow/change_request.py --action list --status "Draft"
 
 # Get change details
 python scripts/servicenow/change_request.py --action get --number "CHG123456"
-
-# View change calendar
-python scripts/servicenow/change_request.py --action calendar \
-    --start-date "2024-03-20" \
-    --end-date "2024-03-27"
 ```
 
-Features:
-- OAuth2 authentication
-- Comprehensive error handling
-- Input validation
-- Retry logic for network operations
-- Proper session management
-- Detailed logging
-- Change calendar integration
-- Status tracking and updates
-
 #### Automated Deployment
-The `automated_deployment.py` script automates the deployment process:
-
 ```bash
 # Run automated deployment
 python scripts/examples/automated_deployment.py \
@@ -129,51 +193,108 @@ python scripts/examples/automated_deployment.py \
     --environment "production"
 ```
 
-Features:
-- Automated change request creation
-- Approval workflow management
-- Deployment execution
-- Post-deployment validation
-- Comprehensive error handling
-- Detailed logging
-- Status notifications
-- Rollback capabilities
-- Timeout handling
+## Configuration
 
-#### Communication Scripts
-The `notify.sh` script handles notifications:
+### Environment Variables
+
+Create a `.env` file with your configuration:
 
 ```bash
-# Send Teams notification
-./scripts/communications/notify.sh teams \
-    --title "Deployment Complete" \
-    --message "Version 1.0.0 deployed successfully"
+# ServiceNow Configuration
+SN_INSTANCE=your-instance.service-now.com
+SN_CLIENT_ID=your-client-id
+SN_CLIENT_SECRET=your-client-secret
+SN_USERNAME=your-username
+SN_PASSWORD=your-password
 
-# Send Outlook email
-./scripts/communications/notify.sh outlook \
-    --to "team@example.com" \
-    --subject "Deployment Complete" \
-    --body "Version 1.0.0 deployed successfully"
+# Notification Configuration
+TEAMS_WEBHOOK_URL=your-teams-webhook-url
+EMAIL_SMTP_SERVER=your-smtp-server
+EMAIL_USERNAME=your-email
+EMAIL_PASSWORD=your-password
+
+# Application Configuration
+LOG_LEVEL=INFO
+TIMEOUT=300
+RETRY_ATTEMPTS=3
 ```
+
+### Centralized Configuration
+
+The project now uses a centralized configuration system:
+
+```python
+from config.settings import ConfigManager
+
+config_manager = ConfigManager()
+config = config_manager.get_config()
+
+# Access configuration
+sn_config = config.servicenow
+notification_config = config.notifications
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage
+python -m pytest tests/ -v --cov=scripts --cov-report=html
+
+# Run specific test file
+python -m pytest tests/unit/test_change_request.py -v
+```
+
+### Code Quality
+
+```bash
+# Run linting
+make lint
+
+# Clean up generated files
+make clean
+```
+
+### Development with Docker
+
+```bash
+# Development environment with hot reload
+docker-compose --profile dev up --build
+
+# Test environment
+docker-compose --profile test up --build --abort-on-container-exit
+```
+
+## Documentation
+
+- [Development Guide](docs/DEVELOPMENT.md) - Comprehensive development documentation
+- [Process Documentation](docs/processes/) - Change management processes
+- [Tool Documentation](docs/tools/) - Integration guides
+- [Templates](templates/) - Process and pipeline templates
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow the [Development Guide](docs/DEVELOPMENT.md)
+4. Run tests and ensure code quality
+5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Create a Pull Request
 
-## Version Control
+## CI/CD Pipeline
 
-- Use semantic versioning
-- Follow Git flow branching model
-- Include detailed commit messages
-- Reference issue numbers in commits
+The project includes a comprehensive CI/CD pipeline with:
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **Automated Testing**: Unit, integration, and security tests
+- **Code Quality**: Linting and style checks
+- **Docker Builds**: Automated container builds
+- **Security Scanning**: Vulnerability assessment
+- **Deployment**: Automated deployment to production
 
 ## Security
 
@@ -181,9 +302,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Environment variable based configuration
 - No hardcoded credentials
 - Secure token management
-- Input validation
-- Error handling
-- Logging and monitoring
+- Input validation and sanitization
+- Comprehensive error handling
+- Security scanning in CI/CD pipeline
 
 ## Error Handling
 
@@ -198,13 +319,19 @@ All scripts include comprehensive error handling:
 ## Logging
 
 Logs are stored in:
-- `servicenow_change.log` for ServiceNow operations
-- `automated_deployment.log` for deployment operations
+- Console output for immediate feedback
+- Log files for persistence
+- Structured logging for better analysis
+- Configurable log levels
 
-Log format includes:
-- Timestamp
-- Log level
-- Module name
-- File and line number
-- Detailed message
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+- Check the [documentation](docs/) for detailed guides
+- Review [existing issues](https://github.com/your-repo/issues) on GitHub
+- Create a new issue with detailed information
+- Contact the development team for urgent matters
 
